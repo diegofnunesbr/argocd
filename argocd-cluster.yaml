@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/diegofnunesbr/cluster.git
+    repoURL: https://github.com/diegofnunesbr/k3s.git
     targetRevision: main
     path: .
   destination:

@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argocd-k3s
+  name: argocd-metallb
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://github.com/diegofnunesbr/k3s.git
+    repoURL: https://github.com/diegofnunesbr/metallb.git
     targetRevision: main
     path: .
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: metallb
   syncPolicy:
     automated:
       prune: true

@@ -3,8 +3,6 @@ kind: Application
 metadata:
   name: argocd-pihole
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "5"
 spec:
   project: default
   source:
@@ -18,11 +16,3 @@ spec:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - PruneLast=true
-      - RespectIgnoreDifferences=true
-  ignoreDifferences:
-    - kind: PersistentVolumeClaim
-      jsonPointers:
-        - /status

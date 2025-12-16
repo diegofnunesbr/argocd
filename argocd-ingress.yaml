@@ -4,6 +4,7 @@ metadata:
   name: argocd-ingress
   namespace: argocd
   annotations:
+    argocd.argoproj.io/sync-wave: "3"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   ingressClassName: nginx

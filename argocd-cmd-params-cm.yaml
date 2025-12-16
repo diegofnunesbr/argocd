@@ -3,5 +3,7 @@ kind: ConfigMap
 metadata:
   name: argocd-cmd-params-cm
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 data:
   server.insecure: "true"

@@ -3,6 +3,8 @@ kind: Certificate
 metadata:
   name: argocd-cert
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   secretName: argocd-tls
   duration: 8760h

@@ -5,13 +5,23 @@ metadata:
   namespace: argocd
 spec:
   project: default
+
   source:
     repoURL: https://github.com/diegofnunesbr/cert-manager.git
     targetRevision: main
-    path: .
+    path: cert-manager
+
+    helm:
+      chart: cert-manager
+      repoURL: https://charts.jetstack.io
+      targetRevision: v1.14.4
+      valueFiles:
+        - values.yaml
+
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
+
   syncPolicy:
     automated:
       prune: true

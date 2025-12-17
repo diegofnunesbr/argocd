@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/diegofnunesbr/metallb.git
+    repoURL: https://github.com/diegofnunesbr/metallb-system.git
     targetRevision: main
     path: .
   destination:

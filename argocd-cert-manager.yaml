@@ -6,17 +6,17 @@ metadata:
 spec:
   project: default
 
-  source:
-    repoURL: https://github.com/diegofnunesbr/cert-manager.git
-    targetRevision: main
-    path: cert-manager
-
-    helm:
+  sources:    
+    - repoURL: https://charts.jetstack.io
       chart: cert-manager
-      repoURL: https://charts.jetstack.io
       targetRevision: v1.14.4
-      valueFiles:
-        - values.yaml
+      helm:
+        valueFiles:
+          - $values/cert-manager/values.yaml
+
+    - repoURL: https://github.com/diegofnunesbr/cert-manager.git
+      targetRevision: main
+      ref: values
 
   destination:
     server: https://kubernetes.default.svc

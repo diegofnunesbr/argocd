@@ -12,7 +12,7 @@ spec:
       targetRevision: v1.14.4
       helm:
         valueFiles:
-          - $values/cert-manager/values.yaml
+          - values.yaml
 
     - repoURL: https://github.com/diegofnunesbr/cert-manager.git
       targetRevision: main

@@ -6,20 +6,10 @@ metadata:
 spec:
   project: default
 
-  sources:
-    # 1️⃣ Helm chart oficial
-    - repoURL: https://charts.jetstack.io
-      chart: cert-manager
-      targetRevision: v1.14.4
-      helm:
-        valueFiles:
-          - $values/cert-manager/values.yaml
-
-    # 2️⃣ Repo Git com values + ClusterIssuer
-    - repoURL: https://github.com/diegofnunesbr/cert-manager.git
-      targetRevision: main
-      ref: values
-      path: .
+  source:
+    repoURL: https://github.com/diegofnunesbr/cert-manager.git
+    targetRevision: main
+    path: .
 
   destination:
     server: https://kubernetes.default.svc

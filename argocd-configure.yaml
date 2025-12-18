@@ -7,11 +7,12 @@ spec:
   secretName: argocd-tls
   duration: 8760h
   renewBefore: 720h
+  commonName: argocd.local
+  dnsNames:
+    - argocd.local
   issuerRef:
     name: selfsigned
     kind: ClusterIssuer
-  dnsNames:
-    - argocd.local
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

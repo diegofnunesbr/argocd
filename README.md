@@ -6,17 +6,17 @@
 - `cd argocd`
 - `kubectl apply -n argocd -f argocd-install.yaml`
 
-### Instalar MetalLB:
+### Instalar o MetalLB:
 
 - `cd argocd/applications`
 - `kubectl apply -f argocd-metallb-system.yaml`
 
-### Instalar ingress-nginx:
+### Instalar o ingress-nginx:
 
 - `cd argocd/applications`
 - `kubectl apply -f argocd-ingress-nginx.yaml`
 
-### Instalar cert-manager:
+### Instalar o cert-manager:
 
 - `cd argocd/applications`
 - `kubectl apply -f argocd-cert-manager.yaml`
@@ -26,7 +26,7 @@
 - `cd argocd`
 - `kubectl apply -n argocd -f argocd-configure.yaml`
 
-### Instalar Pi-hole:
+### Instalar o Pi-hole:
 
 - `cd argocd/applications`
 - `kubectl apply -f argocd-pihole.yaml`

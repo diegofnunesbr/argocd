@@ -41,7 +41,7 @@ cd cert-manager
 kubectl apply -f applications/argocd-cert-manager.yaml
 ```
 
-## sealed-secrets-controller
+### sealed-secrets-controller
 
 ```bash
 git clone https://github.com/diegofnunesbr/sealed-secrets-controller.git
@@ -98,7 +98,7 @@ kubectl delete namespace cert-manager --ignore-not-found
 kubectl get crds | grep cert-manager.io | awk '{print $1}' | xargs kubectl delete crd
 ```
 
-## sealed-secrets-controller
+### sealed-secrets-controller
 
 ```bash
 cd sealed-secrets-controller

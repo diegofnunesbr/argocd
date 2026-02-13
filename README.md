@@ -41,6 +41,14 @@ cd cert-manager
 kubectl apply -f applications/argocd-cert-manager.yaml
 ```
 
+## sealed-secrets-controller
+
+```bash
+git clone https://github.com/diegofnunesbr/sealed-secrets-controller.git
+cd sealed-secrets-controller
+kubectl apply -f applications/argocd-sealed-secrets-controller.yaml
+```
+
 ## Configurar o Argo CD
 
 ```bash
@@ -88,6 +96,15 @@ cd cert-manager
 kubectl delete -f applications/argocd-cert-manager.yaml
 kubectl delete namespace cert-manager --ignore-not-found
 kubectl get crds | grep cert-manager.io | awk '{print $1}' | xargs kubectl delete crd
+```
+
+## sealed-secrets-controller
+
+```bash
+cd sealed-secrets-controller
+kubectl delete -f applications/argocd-sealed-secrets-controller.yaml
+kubectl delete namespace sealed-secrets-controller --ignore-not-found
+kubectl get crds | grep sealedsecrets.bitnami.com | awk '{print $1}' | xargs kubectl delete crd
 ```
 
 ## Remover o Argo CD

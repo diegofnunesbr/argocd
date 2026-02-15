@@ -7,6 +7,17 @@ Este guia descreve o deployment do **Argo CD** em um cluster **Kubernetes** e a 
 - `Kubernetes` instalado
 - `kubectl` instalado
 
+## Estrutura do repositório
+
+```text
+argocd/
+├── argocd-install.yaml     # Instalação do Argo CD (bootstrap manual)
+├── argocd-configure.yaml   # Configurações do Argo CD (Ingress, ajustes)
+└── README.md
+```
+
+---
+
 ## Instalar o Argo CD
 
 ```bash
@@ -56,19 +67,9 @@ cd argocd
 kubectl apply -n argocd -f argocd-configure.yaml
 ```
 
-## Configurar o acesso local do Argo CD no Windows
-
-> **Importante:** execute o comando abaixo em um PowerShell aberto como Administrador.
-
-```powershell
-Add-Content C:\Windows\System32\drivers\etc\hosts "192.168.1.3 argocd.local"
-```
-
-Substitua `192.168.1.3` pelo IP do Ingress/LoadBalancer do Argo CD no seu ambiente.
-
 ## Acessar o Argo CD
 
-https://argocd.local/
+https://argocd.diegofnunesbr.com/
 
 ## Remover a infraestrutura base
 

@@ -12,7 +12,7 @@ Este guia descreve o deployment do **Argo CD** em um cluster **Kubernetes** e a 
 ```bash
 git clone https://github.com/diegofnunesbr/argocd.git
 cd argocd
-kubectl apply -n argocd -f argocd-install.yaml
+kubectl apply -f argocd-install.yaml
 ```
 
 ## Instalar a infraestrutura base

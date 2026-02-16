@@ -11,8 +11,8 @@ Este guia descreve o deployment do **Argo CD** em um cluster **Kubernetes** e a 
 
 ```text
 argocd/
-├── argocd-install.yaml     # Instalação do Argo CD
-├── argocd-configure.yaml   # Configurações do Argo CD
+├── argocd-install.yaml       # Instalação do Argo CD
+├── argocd-configure.yaml     # Configurações do Argo CD
 └── README.md
 ```
 

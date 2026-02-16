@@ -23,7 +23,7 @@ argocd/
 ```bash
 git clone https://github.com/diegofnunesbr/argocd.git
 cd argocd
-kubectl apply -f argocd-install.yaml
+kubectl apply -n argocd -f argocd-install.yaml
 ```
 
 ## Instalar a infraestrutura base

@@ -33,7 +33,7 @@ kubectl apply -n argocd -f argocd-install.yaml
 ```bash
 git clone https://github.com/diegofnunesbr/metallb.git
 cd metallb
-kubectl apply -f applications/argocd.yaml
+kubectl apply -f applications/argocd.metallb.yaml
 ```
 
 ### ingress-nginx
@@ -41,7 +41,7 @@ kubectl apply -f applications/argocd.yaml
 ```bash
 git clone https://github.com/diegofnunesbr/ingress-nginx.git
 cd ingress-nginx
-kubectl apply -f applications/argocd.yaml
+kubectl apply -f applications/argocd.ingress-nginx.yaml
 ```
 
 ### cert-manager
@@ -49,7 +49,7 @@ kubectl apply -f applications/argocd.yaml
 ```bash
 git clone https://github.com/diegofnunesbr/cert-manager.git
 cd cert-manager
-kubectl apply -f applications/argocd.yaml
+kubectl apply -f applications/argocd.cert-manager.yaml
 ```
 
 ### sealed-secrets-controller
@@ -57,7 +57,7 @@ kubectl apply -f applications/argocd.yaml
 ```bash
 git clone https://github.com/diegofnunesbr/sealed-secrets-controller.git
 cd sealed-secrets-controller
-kubectl apply -f applications/argocd.yaml
+kubectl apply -f applications/argocd.sealed-secrets-controller.yaml
 ```
 
 ## Configurar o argocd
@@ -77,7 +77,7 @@ https://argocd.diegofnunesbr.com/
 
 ```bash
 cd ingress-nginx
-kubectl delete -f applications/argocd.yaml
+kubectl delete -f applications/argocd.ingress-nginx.yaml
 kubectl delete namespace ingress-nginx --ignore-not-found
 ```
 
@@ -85,7 +85,7 @@ kubectl delete namespace ingress-nginx --ignore-not-found
 
 ```bash
 cd metallb
-kubectl delete -f applications/argocd.yaml
+kubectl delete -f applications/argocd.metallb.yaml
 kubectl delete namespace metallb --ignore-not-found
 kubectl get crds | grep metallb.io | awk '{print $1}' | xargs kubectl delete crd
 ```
@@ -94,7 +94,7 @@ kubectl get crds | grep metallb.io | awk '{print $1}' | xargs kubectl delete crd
 
 ```bash
 cd cert-manager
-kubectl delete -f applications/argocd.yaml
+kubectl delete -f applications/argocd.cert-manager.yaml
 kubectl delete namespace cert-manager --ignore-not-found
 kubectl get crds | grep cert-manager.io | awk '{print $1}' | xargs kubectl delete crd
 ```
@@ -103,7 +103,7 @@ kubectl get crds | grep cert-manager.io | awk '{print $1}' | xargs kubectl delet
 
 ```bash
 cd sealed-secrets-controller
-kubectl delete -f applications/argocd.yaml
+kubectl delete -f applications/argocd.sealed-secrets-controller.yaml
 kubectl delete namespace sealed-secrets-controller --ignore-not-found
 kubectl get crds | grep sealedsecrets.bitnami.com | awk '{print $1}' | xargs kubectl delete crd
 ```

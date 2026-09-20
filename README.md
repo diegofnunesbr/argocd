@@ -87,11 +87,14 @@ expande nas Applications reais (`sealed-secrets`, `ingress-nginx`, etc.).
 Com `argocd-nodeport.yaml` aplicado:
 
 ```text
-https://<ip-do-node-k0s>:30843
+http://<ip-do-node-k0s>:30843
 ```
 
-(certificado self-signed, o navegador vai avisar). Login `admin` + senha
-inicial autogerada:
+Repare que é **http**, não https: o `argocd-install.yaml` sobe o
+`argocd-server` com `server.insecure: true` (ambas as portas do Service
+apontam pro mesmo `targetPort: 8080`, que só fala HTTP puro - TLS fica
+por conta de um Ingress na frente, que não temos aqui). Login `admin` +
+senha inicial autogerada:
 
 ```bash
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d

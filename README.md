@@ -15,7 +15,8 @@ com os apps do seu homelab, não os produtos/clientes reais da empresa.
 ```text
 argocd/
 ├── argocd-install.yaml            # instalação do ArgoCD em si
-├── argocd-configure.yaml          # configurações do argocd
+├── argocd-configure.yaml          # Ingress+TLS (precisa cert-manager/ingress-nginx)
+├── argocd-nodeport.yaml           # expõe a UI via NodePort fixo (30843), sem dependências
 ├── clusters/
 │   └── homelab/                    # chart raiz: bootstrapa tudo nesse cluster
 │       ├── Chart.yaml
@@ -42,16 +43,21 @@ cd argocd
 kubectl create namespace argocd
 kubectl apply -n argocd -f argocd-install.yaml
 kubectl -n argocd wait --for=condition=Ready pod --all --timeout=120s
-kubectl apply -n argocd -f argocd-configure.yaml
+kubectl apply -n argocd -f argocd-nodeport.yaml
 ```
 
-`argocd-configure.yaml` só serve pra expor a UI via Ingress com TLS - ele
-falha se `cert-manager`/`ingress-nginx` ainda não estiverem instalados
-nesse cluster (`Certificate` CRD ausente / webhook do ingress-nginx
-inexistente). Pra só usar o ArgoCD como controlador (sincronizar
-Applications, sem UI exposta), pule esse `apply` e siga direto pro
-bootstrap abaixo - instale `cert-manager`/`ingress-nginx` depois, quando
-quiser a UI.
+`argocd-nodeport.yaml` expõe a UI direto num NodePort fixo (`30843`),
+mesmo padrão de Mimir/Grafana/Rundeck nesse homelab - sem dependências,
+funciona assim que o ArgoCD sobe. É o caminho recomendado por padrão.
+
+Se preferir expor via Ingress+TLS com domínio próprio (`argocd.diegofnunesbr.com`)
+em vez de NodePort, use `argocd-configure.yaml` no lugar - mas ele exige
+`cert-manager`/`ingress-nginx` já instalados nesse cluster (`Certificate`
+CRD e o webhook do ingress-nginx), senão o apply falha:
+
+```bash
+kubectl apply -n argocd -f argocd-configure.yaml
+```
 
 ## Bootstrapar o cluster (app of apps)
 
@@ -78,5 +84,18 @@ expande nas Applications reais (`sealed-secrets`, `ingress-nginx`, etc.).
 
 ## Acessar o argocd
 
-Configurável depois de expor o serviço (`kubectl port-forward` ou um
-Ingress, dependendo do que já estiver rodando no cluster).
+Com `argocd-nodeport.yaml` aplicado:
+
+```text
+https://<ip-do-node-k0s>:30843
+```
+
+(certificado self-signed, o navegador vai avisar). Login `admin` + senha
+inicial autogerada:
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+```
+
+Recomendado trocar essa senha no primeiro login (`argocd account update-password`
+via CLI, ou pela própria UI em User Info).

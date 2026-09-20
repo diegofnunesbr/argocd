@@ -1,0 +1,5 @@
+apiVersion: v2
+name: core-config
+description: Apps de infraestrutura do cluster homelab (padrão app-of-apps)
+type: application
+version: 0.1.0

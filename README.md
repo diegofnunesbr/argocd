@@ -1,116 +1,73 @@
 # argocd
 
-Este guia descreve o deployment do **argocd** em um cluster **Kubernetes** e a instalação de infraestrutura e aplicações via GitOps.
+Instalação do ArgoCD e o padrão "app of apps" pra gerenciar o que ele
+implanta - mesmo padrão usado na empresa (documentado pelo próprio
+ArgoCD: https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/),
+com os apps do seu homelab, não os produtos/clientes reais da empresa.
 
 ## Pré-requisitos
 
 - `Kubernetes` instalado
-- `kubectl` instalado
+- `kubectl` e `helm` instalados
 
 ## Estrutura do repositório
 
 ```text
 argocd/
-├── argocd-install.yaml       # Instalação do argocd
-├── argocd-configure.yaml     # Configurações do argocd
-└── README.md
+├── argocd-install.yaml            # instalação do ArgoCD em si
+├── argocd-configure.yaml          # configurações do argocd
+├── clusters/
+│   └── homelab/                    # chart raiz: bootstrapa tudo nesse cluster
+│       ├── Chart.yaml
+│       ├── values.yaml              # repoURL/targetRevision deste repositório
+│       └── templates/
+│           ├── appProject.yaml
+│           └── core-config.yaml     # Application apontando pro chart core-config/
+└── core-config/                     # apps de infraestrutura do cluster
+    ├── Chart.yaml
+    ├── values.yaml
+    ├── applications/                 # um arquivo por app real
+    │   ├── sealed-secrets.yaml
+    │   └── ingress-nginx.yaml
+    └── templates/
+        ├── application.yaml          # gera uma Application por arquivo em applications/
+        └── appProject.yaml
 ```
 
----
-
-## Instalar o argocd
+## Instalar o ArgoCD
 
 ```bash
 git clone https://github.com/diegofnunesbr/argocd.git
 cd argocd
+kubectl create namespace argocd
 kubectl apply -n argocd -f argocd-install.yaml
-```
-
-## Instalar a infraestrutura base
-
-### metallb-system
-
-```bash
-git clone https://github.com/diegofnunesbr/metallb-system.git
-cd metallb-system
-kubectl apply -f applications/argocd.metallb-system.yaml
-```
-
-### ingress-nginx
-
-```bash
-git clone https://github.com/diegofnunesbr/ingress-nginx.git
-cd ingress-nginx
-kubectl apply -f applications/argocd.ingress-nginx.yaml
-```
-
-### sealed-secrets
-
-```bash
-git clone https://github.com/diegofnunesbr/sealed-secrets.git
-cd sealed-secrets
-kubectl apply -f applications/argocd.sealed-secrets.yaml
-```
-
-### cert-manager
-
-```bash
-git clone https://github.com/diegofnunesbr/cert-manager.git
-cd cert-manager
-kubectl apply -f applications/argocd.cert-manager.yaml
-```
-
-## Configurar o argocd
-
-```bash
-cd argocd
 kubectl apply -n argocd -f argocd-configure.yaml
 ```
 
+## Bootstrapar o cluster (app of apps)
+
+```bash
+helm template clusters/homelab | kubectl apply -n argocd -f -
+```
+
+Isso cria a `Application core-config`, que o próprio ArgoCD sincroniza e
+expande nas Applications reais (`sealed-secrets`, `ingress-nginx`, etc.).
+
+## Adicionar um app novo de infraestrutura
+
+1. Crie um arquivo em `core-config/applications/<nome>.yaml` com
+   `name`, `repoURL`, `chart`, `targetRevision` e `namespace`.
+2. Dê push - o ArgoCD sincroniza sozinho (`automated: prune, selfHeal`).
+
+## Adicionar um grupo novo (tipo `core-config`)
+
+1. Crie uma pasta irmã de `core-config/` (ex.: `observability/`), com a
+   mesma estrutura (`Chart.yaml`, `values.yaml`, `applications/`,
+   `templates/application.yaml`, `templates/appProject.yaml`).
+2. Adicione um `templates/<nome-do-grupo>.yaml` em `clusters/homelab/`
+   apontando pra essa pasta nova, igual `core-config.yaml`.
+
 ## Acessar o argocd
 
-https://argocd.diegofnunesbr.com/
-
-## Remover a infraestrutura base
-
-### ingress-nginx
-
-```bash
-cd ingress-nginx
-kubectl delete -f applications/argocd.ingress-nginx.yaml
-kubectl delete namespace ingress-nginx --ignore-not-found
-```
-
-### metallb-system
-
-```bash
-cd metallb-system
-kubectl delete -f applications/argocd.metallb-system.yaml
-kubectl delete namespace metallb-system --ignore-not-found
-kubectl get crds | grep metallb-system.io | awk '{print $1}' | xargs kubectl delete crd
-```
-
-### cert-manager
-
-```bash
-cd cert-manager
-kubectl delete -f applications/argocd.cert-manager.yaml
-kubectl delete namespace cert-manager --ignore-not-found
-kubectl get crds | grep cert-manager.io | awk '{print $1}' | xargs kubectl delete crd
-```
-
-### sealed-secrets
-
-```bash
-cd sealed-secrets
-kubectl delete -f applications/argocd.sealed-secrets.yaml
-kubectl delete namespace sealed-secrets --ignore-not-found
-kubectl get crds | grep sealedsecrets.bitnami.com | awk '{print $1}' | xargs kubectl delete crd
-```
-
-## Remover o argocd
-
-```bash
-cd argocd
-kubectl delete -f argocd-install.yaml
-```
+Configurável depois de expor o serviço (`kubectl port-forward` ou um
+Ingress, dependendo do que já estiver rodando no cluster).

@@ -1,0 +1,5 @@
+apiVersion: v2
+name: homelab
+description: Bootstrap do cluster homelab (app-of-apps raiz)
+type: application
+version: 0.1.0

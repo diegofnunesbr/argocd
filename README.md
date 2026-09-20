@@ -41,8 +41,17 @@ git clone https://github.com/diegofnunesbr/argocd.git
 cd argocd
 kubectl create namespace argocd
 kubectl apply -n argocd -f argocd-install.yaml
+kubectl -n argocd wait --for=condition=Ready pod --all --timeout=120s
 kubectl apply -n argocd -f argocd-configure.yaml
 ```
+
+`argocd-configure.yaml` só serve pra expor a UI via Ingress com TLS - ele
+falha se `cert-manager`/`ingress-nginx` ainda não estiverem instalados
+nesse cluster (`Certificate` CRD ausente / webhook do ingress-nginx
+inexistente). Pra só usar o ArgoCD como controlador (sincronizar
+Applications, sem UI exposta), pule esse `apply` e siga direto pro
+bootstrap abaixo - instale `cert-manager`/`ingress-nginx` depois, quando
+quiser a UI.
 
 ## Bootstrapar o cluster (app of apps)
 

@@ -12,6 +12,11 @@ spec:
     repoURL: {{ $app.repoURL }}
     targetRevision: {{ $app.targetRevision | default "HEAD" }}
     chart: {{ $app.chart }}
+    {{- if $app.values }}
+    helm:
+      valuesObject:
+{{ toYaml $app.values | indent 8 }}
+    {{- end }}
   destination:
     server: https://kubernetes.default.svc
     namespace: {{ $app.namespace }}

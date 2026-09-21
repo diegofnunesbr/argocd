@@ -5,6 +5,51 @@ implanta - mesmo padrão usado na empresa (documentado pelo próprio
 ArgoCD: https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/),
 com os apps do seu homelab, não os produtos/clientes reais da empresa.
 
+## Ordem de bring-up completo do homelab
+
+Cada repositório abaixo documenta a si mesmo, mas nenhum documenta a
+ordem entre eles - essa é a sequência completa, do hardware até o
+Jenkins, pra subir tudo do zero:
+
+1. **Proxmox instalado e hardened** - instalação (`https://192.168.0.3:8006/`),
+   usuário `diegofnunesbr@pam` como Administrator com 2FA, `root@pam`
+   desabilitado na UI/API, SSH só por chave (sem senha, sem root). Runbook
+   nas suas anotações pessoais, não é um repositório git.
+2. **`cloud-init`** - perfis de primeira execução das VMs. Não precisa
+   nenhuma ação isolada aqui na primeira vez, o `terraform` consome
+   direto pelo `vm.yaml.tftpl`.
+3. **`terraform`** - cria as VMs no Proxmox (`vm-ubuntu`, `vm-test`, etc.),
+   já nascendo com a chave SSH pessoal e a do Rundeck autorizadas via
+   cloud-init. Pré-requisito: `keys/rundeck.pub` já deve existir (gerado
+   no passo do Rundeck abaixo) ou deixe `rundeck_ssh_public_key` vazio e
+   rode `terragrunt apply` de novo depois.
+4. **k0s** - instalado dentro da VM que vai hospedar o cluster
+   (`vm-ubuntu`), single-node (`curl -sSLf https://get.k0s.sh | sudo sh`
+   e sequência do repositório `k0s`).
+5. **`rundeck`** - `deploy.sh` direto no node do k0s, depois "Preparar
+   hosts" (só pra VMs fora do fluxo `terraform`) e "Configuração"
+   (projeto, node source, autenticação SSH, jobs). É o único repositório
+   que **não** depende do ArgoCD.
+6. **`argocd`** (este repositório) - `argocd-install.yaml` +
+   `argocd-nodeport.yaml`, depois o bootstrap do app-of-apps
+   (`helm template clusters/homelab | kubectl apply -n argocd -f -`),
+   que já traz `sealed-secrets` e `ingress-nginx` junto via
+   `core-config`. **Sealed Secrets sai daqui** - é pré-requisito de
+   `grafana` e `jenkins` abaixo.
+7. **`mimir`** - depende só do ArgoCD (passo 6).
+8. **`grafana`** - depende do ArgoCD + Sealed Secrets (passo 6) e do
+   Mimir (passo 7, pro datasource).
+9. **`jenkins`** - depende do ArgoCD + Sealed Secrets (passo 6). Rodar
+   `./build.sh` **antes** de aplicar a Application (o próprio README do
+   repositório já avisa, mas é fácil esquecer nessa altura do processo).
+10. **Onboardar as VMs** - job `onboard-vm` do Rundeck (passo 5) em cada
+    VM criada no passo 3, a qualquer momento depois do Mimir (passo 7)
+    estar de pé, pra as métricas já aparecerem no Grafana.
+
+Lembrete que vale pra `mimir`/`grafana`/`jenkins`/este repositório: as
+Applications do ArgoCD leem do GitHub, não do seu clone local - todo
+`git push` esquecido é uma sincronização que não acontece.
+
 ## Pré-requisitos
 
 - `Kubernetes` instalado

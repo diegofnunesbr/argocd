@@ -1,24 +1,33 @@
-apiVersion: cert-manager.io/v1
-kind: Certificate
+apiVersion: v1
+kind: Service
 metadata:
-  name: argocd-cert
+  name: argocd-server
   namespace: argocd
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: argocd-server
+    app.kubernetes.io/part-of: argocd
 spec:
-  secretName: argocd-tls
-  commonName: argocd.diegofnunesbr.com
-  dnsNames:
-    - argocd.diegofnunesbr.com
-  issuerRef:
-    name: letsencrypt-clusterissuer
-    kind: ClusterIssuer
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: argocd-server
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: argocd-ingress
+  name: argocd-server
   namespace: argocd
   annotations:
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-clusterissuer
 spec:
   ingressClassName: nginx
   tls:

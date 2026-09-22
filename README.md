@@ -30,25 +30,42 @@ Jenkins, pra subir tudo do zero:
    hosts" (só pra VMs fora do fluxo `terraform`) e "Configuração"
    (projeto, node source, autenticação SSH, jobs). É o único repositório
    que **não** depende do ArgoCD.
-6. **`argocd`** (este repositório) - `argocd-install.yaml` +
-   `argocd-nodeport.yaml`, depois o bootstrap do app-of-apps
-   (`helm template clusters/homelab | kubectl apply -n argocd -f -`),
-   que já traz `sealed-secrets` e `ingress-nginx` junto via
-   `core-config`. **Sealed Secrets sai daqui** - é pré-requisito de
-   `grafana` e `jenkins` abaixo.
-7. **`mimir`** - depende só do ArgoCD (passo 6).
-8. **`grafana`** - depende do ArgoCD + Sealed Secrets (passo 6) e do
-   Mimir (passo 7, pro datasource).
-9. **`jenkins`** - depende do ArgoCD + Sealed Secrets (passo 6). Rodar
-   `./build.sh` **antes** de aplicar a Application (o próprio README do
-   repositório já avisa, mas é fácil esquecer nessa altura do processo).
-10. **Onboardar as VMs** - job `onboard-vm` do Rundeck (passo 5) em cada
-    VM criada no passo 3, a qualquer momento depois do Mimir (passo 7)
-    estar de pé, pra as métricas já aparecerem no Grafana.
+6. **`argocd`** (este repositório) - `argocd-install.yaml`, depois o
+   bootstrap do app-of-apps (`helm template clusters/homelab | kubectl
+   apply -n argocd -f -`), que já traz `sealed-secrets` e `ingress-nginx`
+   (com `hostNetwork: true`, escutando `80`/`443` direto no node) via
+   `core-config`. **Sealed Secrets e ingress-nginx saem daqui** - são
+   pré-requisito de tudo que vem depois.
+7. **`dns`** - registros DNS no Cloudflare via Terragrunt, incluindo o
+   de cada serviço que vai ganhar Ingress (`argocd`, `mimir`, `grafana`,
+   `jenkins`, tudo apontando pro IP da `vm-ubuntu`).
+8. **`cert-manager`** - depende do Sealed Secrets (passo 6, pro
+   `cert-manager-secret` com o token do Cloudflare) e indiretamente do
+   `dns` (passo 7, o `ClusterIssuer` só emite certificado depois que o
+   registro DNS do domínio já existir). Depois de saudável, aplique
+   `argocd-ingress.yaml` **deste** repositório pra trocar o acesso ao
+   próprio ArgoCD de port-forward pra `https://argocd.diegofnunesbr.com`.
+9. **`mimir`** - depende do ArgoCD, `cert-manager` e `ingress-nginx`
+   (passos 6/8) e do registro DNS `mimir.diegofnunesbr.com` (passo 7).
+10. **`grafana`** - mesmas dependências do Mimir (passo 9), mais o
+    próprio Mimir (pro datasource).
+11. **`jenkins`** - mesmas dependências do Mimir (passo 9). Rodar
+    `./build.sh` **antes** de aplicar a Application (o próprio README do
+    repositório já avisa, mas é fácil esquecer nessa altura do processo).
+12. **Onboardar as VMs** - job `onboard-vm` do Rundeck (passo 5) em cada
+    VM criada no passo 3, a qualquer momento depois do Mimir (passo 9)
+    estar de pé - o Alloy já sai configurado apontando pra
+    `https://mimir.diegofnunesbr.com`, sem passo manual.
 
 Lembrete que vale pra `mimir`/`grafana`/`jenkins`/este repositório: as
 Applications do ArgoCD leem do GitHub, não do seu clone local - todo
 `git push` esquecido é uma sincronização que não acontece.
+
+**Todos os serviços com Ingress usam o mesmo par de mudanças**: Service
+`ClusterIP` (nunca `NodePort`) + bloco `ingress` (ou um `Ingress` à mão,
+pros repositórios sem chart Helm) com a anotação
+`cert-manager.io/cluster-issuer: letsencrypt-clusterissuer` - o resto
+(emissão do certificado, renovação) é automático.
 
 ## Pré-requisitos
 
@@ -60,8 +77,7 @@ Applications do ArgoCD leem do GitHub, não do seu clone local - todo
 ```text
 argocd/
 ├── argocd-install.yaml            # instalação do ArgoCD em si
-├── argocd-configure.yaml          # Ingress+TLS (precisa cert-manager/ingress-nginx)
-├── argocd-nodeport.yaml           # expõe a UI via NodePort fixo (30843), sem dependências
+├── argocd-ingress.yaml            # Service ClusterIP + Ingress com TLS via cert-manager
 ├── clusters/
 │   └── homelab/                    # chart raiz: bootstrapa tudo nesse cluster
 │       ├── Chart.yaml
@@ -88,20 +104,21 @@ cd argocd
 kubectl create namespace argocd
 kubectl apply -n argocd -f argocd-install.yaml
 kubectl -n argocd wait --for=condition=Ready pod --all --timeout=120s
-kubectl apply -n argocd -f argocd-nodeport.yaml
 ```
 
-`argocd-nodeport.yaml` expõe a UI direto num NodePort fixo (`30843`),
-mesmo padrão de Mimir/Grafana/Rundeck nesse homelab - sem dependências,
-funciona assim que o ArgoCD sobe. É o caminho recomendado por padrão.
-
-Se preferir expor via Ingress+TLS com domínio próprio (`argocd.diegofnunesbr.com`)
-em vez de NodePort, use `argocd-configure.yaml` no lugar - mas ele exige
-`cert-manager`/`ingress-nginx` já instalados nesse cluster (`Certificate`
-CRD e o webhook do ingress-nginx), senão o apply falha:
+Nesse ponto ainda não tem `Ingress` (depende do `ingress-nginx`, que só
+vem no bootstrap abaixo) nem TLS (depende do `cert-manager`, repositório
+separado, instalado depois). Pra acompanhar o bootstrap visualmente
+enquanto isso, use port-forward:
 
 ```bash
-kubectl apply -n argocd -f argocd-configure.yaml
+kubectl -n argocd port-forward svc/argocd-server 8080:80
+```
+
+Acesse `http://localhost:8080`, login `admin` + senha inicial:
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
 ```
 
 ## Bootstrapar o cluster (app of apps)
@@ -112,6 +129,19 @@ helm template clusters/homelab | kubectl apply -n argocd -f -
 
 Isso cria a `Application core-config`, que o próprio ArgoCD sincroniza e
 expande nas Applications reais (`sealed-secrets`, `ingress-nginx`, etc.).
+
+## Expor o ArgoCD via Ingress (depois do cert-manager instalado)
+
+Só depois que `cert-manager` (repositório separado) e `ingress-nginx`
+(veio no bootstrap acima) estiverem saudáveis:
+
+```bash
+kubectl apply -f argocd-ingress.yaml
+```
+
+Isso troca o Service pra `ClusterIP` e cria um `Ingress` com TLS
+automático - o próprio port-forward acima para de ser necessário depois
+disso.
 
 ## Adicionar um app novo de infraestrutura
 
@@ -129,17 +159,19 @@ expande nas Applications reais (`sealed-secrets`, `ingress-nginx`, etc.).
 
 ## Acessar o argocd
 
-Com `argocd-nodeport.yaml` aplicado:
+Com `argocd-ingress.yaml` aplicado:
 
 ```text
-http://<ip-do-node-k0s>:30843
+https://argocd.diegofnunesbr.com
 ```
 
-Repare que é **http**, não https: o `argocd-install.yaml` sobe o
-`argocd-server` com `server.insecure: true` (ambas as portas do Service
-apontam pro mesmo `targetPort: 8080`, que só fala HTTP puro - TLS fica
-por conta de um Ingress na frente, que não temos aqui). Login `admin` +
-senha inicial autogerada:
+Certificado real (Let's Encrypt, renovado automaticamente pelo
+cert-manager). O `argocd-server` roda com `server.insecure: true`
+internamente (fala HTTP puro na porta `8080`) - o TLS é terminado no
+`Ingress`/`ingress-nginx`, não no próprio ArgoCD, então isso é
+transparente pra quem acessa.
+
+Login `admin` + senha inicial autogerada:
 
 ```bash
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d

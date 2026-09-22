@@ -5,8 +5,7 @@ targetRevision: 4.11.3
 namespace: ingress-nginx
 values:
   controller:
+    hostNetwork: true
+    dnsPolicy: ClusterFirstWithHostNet
     service:
-      type: NodePort
-      nodePorts:
-        http: 30080
-        https: 30443
+      type: ClusterIP

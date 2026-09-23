@@ -180,9 +180,40 @@ Login `admin` + senha definida em "Trocar a senha do admin" abaixo (ou,
 numa instalação nova antes de trocar, a inicial autogerada:
 `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d`).
 
+## Acessar o cluster de fora da VM (contexto `k0s`)
+
+Os scripts de troca de senha (deste e dos outros repositórios) rodam da
+sua máquina, com `kubectl --context=k0s`, porque também fazem `git push`.
+Pra adicionar esse contexto num kubeconfig que já tem outros clusters,
+sem mexer no contexto ativo:
+
+```bash
+cp ~/.kube/config ~/.kube/config.bak-$(date +%F)
+umask 077
+scp diegofnunesbr@192.168.0.4:~/.kube/config ~/.kube/k0s.yaml
+grep server: ~/.kube/k0s.yaml
+KUBECONFIG=~/.kube/config:~/.kube/k0s.yaml kubectl config view --merge --flatten > ~/.kube/config.merged
+mv ~/.kube/config.merged ~/.kube/config
+chmod 600 ~/.kube/config
+rm ~/.kube/k0s.yaml
+kubectl --context=k0s get nodes
+```
+
+- O `grep server:` tem que mostrar `https://192.168.0.4:6443`, não
+  `localhost`.
+- Na mesclagem, nome repetido fica com o **primeiro** arquivo. Se o seu
+  kubeconfig já tiver um `cluster`/`user` antigo com os nomes que o k0s usa
+  (`local`/`user`, de uma instalação anterior do cluster), apague antes com
+  `kubectl config delete-cluster local` e `kubectl config delete-user user`,
+  senão a credencial velha continua valendo e dá erro de certificado.
+- Os scripts usam o contexto `k0s` fixo, nunca o contexto ativo, então
+  não tocam outros clusters do seu kubeconfig. Outro nome? Rode com
+  `KUBE_CONTEXT=<nome> ./script.sh`.
+
 ## Trocar a senha do admin
 
-Rode daqui do seu clone (precisa de `htpasswd` e `ssh` pra `vm-ubuntu`):
+Rode daqui do seu clone (precisa de `htpasswd` e do contexto `k0s`, seção
+acima):
 
 ```bash
 ./change-admin-password.sh
@@ -195,3 +226,7 @@ repositórios, isso **não** vai pro git: o `argocd-secret` também guarda
 chaves que o ArgoCD gera e escreve sozinho, então selar ele inteiro faria
 o Sealed Secrets sobrescrever essas chaves. Numa reinstalação do zero,
 basta rodar o script de novo.
+
+Também dá pra trocar pela interface (User Info → Update Password), que
+pede a senha atual. O script serve pros casos em que a interface não
+ajuda: senha esquecida, ou reinstalação com a senha inicial aleatória.

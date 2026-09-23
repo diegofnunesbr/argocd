@@ -83,6 +83,7 @@ pros repositórios sem chart Helm) com a anotação
 argocd/
 ├── argocd-install.yaml            # instalação do ArgoCD em si
 ├── argocd-ingress.yaml            # Service ClusterIP + Ingress com TLS via cert-manager
+├── change-admin-password.sh       # troca a senha do admin
 ├── clusters/
 │   └── homelab/                    # chart raiz: bootstrapa tudo nesse cluster
 │       ├── Chart.yaml
@@ -175,11 +176,22 @@ internamente (fala HTTP puro na porta `8080`) - o TLS é terminado no
 `Ingress`/`ingress-nginx`, não no próprio ArgoCD, então isso é
 transparente pra quem acessa.
 
-Login `admin` + senha inicial autogerada:
+Login `admin` + senha definida em "Trocar a senha do admin" abaixo (ou,
+numa instalação nova antes de trocar, a inicial autogerada:
+`kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d`).
+
+## Trocar a senha do admin
+
+Rode daqui do seu clone (precisa de `htpasswd` e `ssh` pra `vm-ubuntu`):
 
 ```bash
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+./change-admin-password.sh
 ```
 
-Recomendado trocar essa senha no primeiro login (`argocd account update-password`
-via CLI, ou pela própria UI em User Info).
+Pede a senha sem ecoar, gera o hash bcrypt e grava em `argocd-secret`
+(`admin.password`), que é onde o próprio ArgoCD guarda - e apaga o
+`argocd-initial-admin-secret`, que deixa de valer. Diferente dos outros
+repositórios, isso **não** vai pro git: o `argocd-secret` também guarda
+chaves que o ArgoCD gera e escreve sozinho, então selar ele inteiro faria
+o Sealed Secrets sobrescrever essas chaves. Numa reinstalação do zero,
+basta rodar o script de novo.

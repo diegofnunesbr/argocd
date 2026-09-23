@@ -89,17 +89,19 @@ argocd/
 │       ├── Chart.yaml
 │       ├── values.yaml              # repoURL/targetRevision deste repositório
 │       └── templates/
-│           ├── appProject.yaml
 │           └── core-config.yaml     # Application apontando pro chart core-config/
 └── core-config/                     # apps de infraestrutura do cluster
     ├── Chart.yaml
-    ├── values.yaml
     ├── applications/                 # um arquivo por app real
     │   └── sealed-secrets.yaml
     └── templates/
-        ├── application.yaml          # gera uma Application por arquivo em applications/
-        └── appProject.yaml
+        └── application.yaml          # gera uma Application por arquivo em applications/
 ```
+
+Todas as Applications do homelab (as daqui e as de cada repositório de
+app) usam o project `default` do ArgoCD. Não há projects próprios: eles só
+serviriam pra separar permissões entre times, e aqui tudo é de um usuário
+só.
 
 ## Instalar o ArgoCD
 
@@ -157,8 +159,8 @@ disso.
 ## Adicionar um grupo novo (tipo `core-config`)
 
 1. Crie uma pasta irmã de `core-config/` (ex.: `observability/`), com a
-   mesma estrutura (`Chart.yaml`, `values.yaml`, `applications/`,
-   `templates/application.yaml`, `templates/appProject.yaml`).
+   mesma estrutura (`Chart.yaml`, `applications/`,
+   `templates/application.yaml`).
 2. Adicione um `templates/<nome-do-grupo>.yaml` em `clusters/homelab/`
    apontando pra essa pasta nova, igual `core-config.yaml`.
 

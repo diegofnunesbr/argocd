@@ -57,7 +57,13 @@ Jenkins, pra subir tudo do zero:
     `vm-ubuntu` (passos 0/1 do README dele).
 14. **`ia`** - mesmas dependências do Mimir (passo 10). Build/import das
     imagens antes de aplicar a Application.
-15. **Onboardar as VMs** - job `onboard-vm` do Rundeck (passo 9) em cada
+15. **`keycloak`** - depende do Sealed Secrets, `cert-manager`,
+    `ingress-nginx` e do DNS `keycloak.diegofnunesbr.com`. Depois de de pé,
+    `./change-user-password.sh` (repositório `keycloak`) pra definir a sua
+    senha. Até aqui o login do ArgoCD tem que ser pelo admin religado
+    (seção "Admin local (desligado) e emergência"); a partir daqui, desligue
+    de novo e use "Log in via Keycloak".
+16. **Onboardar as VMs** - job `onboard-vm` do Rundeck (passo 9) em cada
     VM criada no passo 3, a qualquer momento depois do Mimir (passo 10)
     estar de pé - o Alloy já sai configurado apontando pra
     `https://mimir.diegofnunesbr.com`, sem passo manual.

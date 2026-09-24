@@ -182,6 +182,26 @@ Login `admin` + senha definida em "Trocar a senha do admin" abaixo (ou,
 numa instalação nova antes de trocar, a inicial autogerada:
 `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d`).
 
+## Login pelo Keycloak (SSO)
+
+Botão **"Log in via Keycloak"** na tela de login, usando o realm `homelab`
+do Keycloak (repositório `keycloak`, `https://sso.diegofnunesbr.com`).
+Configurado direto nos ConfigMaps do `argocd-install.yaml` (editados no
+lugar, junto com o `server.insecure` que fica no fim do arquivo):
+
+- `argocd-cm`: `url` pública do ArgoCD e `oidc.config` apontando pro
+  Keycloak, cliente `argocd` com PKCE (sem segredo de cliente).
+- `argocd-rbac-cm`: grupo `argocd-admins` do Keycloak vira `role:admin`;
+  qualquer outro usuário logado pelo Keycloak fica só com leitura
+  (`policy.default: role:readonly`), igual à empresa.
+
+Pra dar admin a alguém: no Keycloak, realm `homelab`, coloque o usuário no
+grupo `argocd-admins`.
+
+**Atualizar o ArgoCD:** o `argocd-install.yaml` é o manifesto oficial com
+essas edições. Ao trocar pela versão nova, refaça as edições no
+`argocd-cm`, no `argocd-rbac-cm` e o `argocd-cmd-params-cm` do fim.
+
 ## Acessar o cluster de fora da VM (contexto `k0s`)
 
 Os scripts de troca de senha (deste e dos outros repositórios) rodam da

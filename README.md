@@ -185,7 +185,7 @@ numa instalação nova antes de trocar, a inicial autogerada:
 ## Login pelo Keycloak (SSO)
 
 Botão **"Log in via Keycloak"** na tela de login, usando o realm `homelab`
-do Keycloak (repositório `keycloak`, `https://sso.diegofnunesbr.com`).
+do Keycloak (repositório `keycloak`, `https://keycloak.diegofnunesbr.com`).
 Configurado direto nos ConfigMaps do `argocd-install.yaml` (editados no
 lugar, junto com o `server.insecure` que fica no fim do arquivo):
 

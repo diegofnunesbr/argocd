@@ -232,9 +232,25 @@ kubectl --context=k0s get nodes
   não tocam outros clusters do seu kubeconfig. Outro nome? Rode com
   `KUBE_CONTEXT=<nome> ./script.sh`.
 
+## Admin local (desligado) e emergência
+
+O login local do `admin` fica **desligado** (`admin.enabled: "false"` no
+`argocd-cm`), igual à empresa: só se entra pelo Keycloak. Se o Keycloak
+cair (ou você se trancar fora do realm), religue o admin pelo `kubectl`,
+entre, resolva, e desligue de novo:
+
+```bash
+kubectl --context=k0s -n argocd patch cm argocd-cm --type merge -p '{"data":{"admin.enabled":"true"}}'
+kubectl --context=k0s -n argocd patch cm argocd-cm --type merge -p '{"data":{"admin.enabled":"false"}}'
+```
+
+Numa instalação do zero, o `argocd-install.yaml` já sobe com o admin
+desligado, e o Keycloak ainda não existe nessa hora: religue o admin com o
+primeiro comando até o Keycloak estar de pé.
+
 ## Trocar a senha do admin
 
-Rode daqui do seu clone (precisa de `htpasswd` e do contexto `k0s`, seção
+Só faz diferença com o admin religado (ver seção acima). Rode daqui do seu clone (precisa de `htpasswd` e do contexto `k0s`, seção
 acima):
 
 ```bash

@@ -24739,6 +24739,7 @@ subjects:
 ---
 apiVersion: v1
 data:
+  admin.enabled: "false"
   oidc.config: |
     name: Keycloak
     issuer: https://keycloak.diegofnunesbr.com/realms/homelab

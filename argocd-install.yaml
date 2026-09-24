@@ -24742,7 +24742,7 @@ data:
   admin.enabled: "false"
   oidc.config: |
     name: Keycloak
-    issuer: https://keycloak.diegofnunesbr.com/realms/homelab
+    issuer: https://keycloak.diegofnunesbr.com/realms/home
     clientID: argocd
     enablePKCEAuthentication: true
     requestedScopes: ["openid", "profile", "email"]

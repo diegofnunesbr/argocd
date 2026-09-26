@@ -27,7 +27,7 @@ Jenkins, pra subir tudo do zero:
    (`vm-ubuntu`), single-node (`curl -sSLf https://get.k0s.sh | sudo sh`
    e sequência do repositório `k0s`).
 5. **`argocd`** (este repositório) - `argocd-install.yaml`, depois o
-   bootstrap do app-of-apps (`helm template clusters/home | kubectl
+   bootstrap do app-of-apps (`helm template clusters/homelab | kubectl
    apply -n argocd -f -`), que traz o `sealed-secrets` via `core-config`.
    **Sealed Secrets sai daqui** - é pré-requisito de tudo que vem depois.
 6. **`ingress-nginx`** - Application própria (chart oficial +
@@ -91,7 +91,7 @@ argocd/
 ├── argocd-ingress.yaml            # Service ClusterIP + Ingress com TLS via cert-manager
 ├── change-admin-password.sh       # troca a senha do admin
 ├── clusters/
-│   └── home/                        # chart raiz: bootstrapa tudo nesse cluster
+│   └── homelab/                     # chart raiz: bootstrapa tudo nesse cluster
 │       ├── Chart.yaml
 │       ├── values.yaml              # repoURL/targetRevision deste repositório
 │       └── templates/
@@ -137,7 +137,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.pas
 ## Bootstrapar o cluster (app of apps)
 
 ```bash
-helm template clusters/home | kubectl apply -n argocd -f -
+helm template clusters/homelab | kubectl apply -n argocd -f -
 ```
 
 Isso cria a `Application core-config`, que o próprio ArgoCD sincroniza e
@@ -167,7 +167,7 @@ disso.
 1. Crie uma pasta irmã de `core-config/` (ex.: `observability/`), com a
    mesma estrutura (`Chart.yaml`, `applications/`,
    `templates/application.yaml`).
-2. Adicione um `templates/<nome-do-grupo>.yaml` em `clusters/home/`
+2. Adicione um `templates/<nome-do-grupo>.yaml` em `clusters/homelab/`
    apontando pra essa pasta nova, igual `core-config.yaml`.
 
 ## Acessar o argocd
@@ -190,7 +190,7 @@ numa instalação nova antes de trocar, a inicial autogerada:
 
 ## Login pelo Keycloak (SSO)
 
-Botão **"Log in via Keycloak"** na tela de login, usando o realm `home`
+Botão **"Log in via Keycloak"** na tela de login, usando o realm `homelab`
 do Keycloak (repositório `keycloak`, `https://keycloak.diegofnunesbr.com`).
 Configurado direto nos ConfigMaps do `argocd-install.yaml` (editados no
 lugar, junto com o `server.insecure` que fica no fim do arquivo):
@@ -201,7 +201,7 @@ lugar, junto com o `server.insecure` que fica no fim do arquivo):
   qualquer outro usuário logado pelo Keycloak fica só com leitura
   (`policy.default: role:readonly`), igual à empresa.
 
-Pra dar admin a alguém: no Keycloak, realm `home`, coloque o usuário no
+Pra dar admin a alguém: no Keycloak, realm `homelab`, coloque o usuário no
 grupo `argocd-admins`.
 
 **Atualizar o ArgoCD:** o `argocd-install.yaml` é o manifesto oficial com
